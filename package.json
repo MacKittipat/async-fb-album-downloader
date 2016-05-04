@@ -2,6 +2,8 @@
   "name": "fb-album-downloader",
   "version": "1.0.0",
   "devDependencies": {
-    "sync-request" : "2.0.1"
+    "sync-request" : "2.0.1",
+    "async": "1.5.x",
+    "request": "2.72.x"
   }
 }

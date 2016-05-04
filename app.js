@@ -1,4 +1,5 @@
-var request = require('sync-request');
+var request = require('request');
+var async = require("async");
 var fs = require('fs');
 
 // http://support.averta.net/envato/knowledgebase/find-facebook-album-id/
@@ -8,38 +9,14 @@ var fbAccessToken = '';
 
 var fbGraphUrl = 'https://graph.facebook.com/v2.3/'
   + fbAlbumId + '/photos?access_token='
-  + fbAccessToken + '&format=json&limit=500';
+  + fbAccessToken + '&format=json&limit=100';
 
-var count = 1;
-var hasNext = true;
-
-while(hasNext) {
-
-  var fbGraphRes = request(
-    'GET',
-    fbGraphUrl
-  );
-  var jsonString = fbGraphRes.getBody('utf-8');
-  var json = JSON.parse(jsonString);
-
-  for(var i=0; i<json.data.length; i++) {
-    // Get image
-    var item = json.data[i];
-    var imageUrl = item.images[0].source.replace("https", "http");
-    console.log('count = ' + count + ' = ' + imageUrl);
-
-    // Download image
-    var fbImageRes = request(
-      'GET',
-      imageUrl
-    );
-    fs.writeFileSync(count + '.jpg', fbImageRes.getBody());
-    count++;
-
+request(fbGraphUrl, function (error, response, body) {
+  if (!error && response.statusCode == 200) {
+    var json = JSON.parse(body);
+    async.each(json.data, function(item, err){
+        var imageUrl = item.images[0].source.replace("https", "http");
+        request(imageUrl).pipe(fs.createWriteStream(Date.now() + '.jpg'));
+    });
   }
-  if(!json.paging.next) {
-    hasNext = false
-  } else {
-    url = json.paging.next;
-  }
-}
+});
